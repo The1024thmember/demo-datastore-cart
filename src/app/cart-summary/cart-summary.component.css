@@ -1,0 +1,27 @@
+
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.summary-table th,
+.summary-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.summary-table th {
+  background-color: #f4f4f4;
+}
+
+.total-line {
+  border-top: 2px solid #000;
+}
+
+.total-amount {
+  text-align: right;
+  padding: 8px 0;
+  font-weight: bold;
+}
