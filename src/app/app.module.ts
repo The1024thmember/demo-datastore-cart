@@ -6,7 +6,7 @@ import { CartSummaryComponent } from './cart-summary/cart-summary.component';
 import { ProductListComponent } from './product-list/product-list.component';
 
 @NgModule({
-  declarations: [AppComponent, ProductListComponent, CartSummaryComponent],
+  declarations: [AppComponent, CartSummaryComponent, ProductListComponent],
   imports: [BrowserModule, HttpClientModule],
   providers: [],
   bootstrap: [AppComponent],

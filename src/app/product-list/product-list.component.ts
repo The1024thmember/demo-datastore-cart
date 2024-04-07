@@ -3,7 +3,17 @@ import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-product-list',
-  templateUrl: './product-list.component.html',
+  template: `<section>
+    <div>
+      <h2>Products</h2>
+      <ul>
+        <li *ngFor="let product of products">
+          {{ product.name }} - {{ product.price }}
+          <button (click)="addToCart(product)">Add to Cart</button>
+        </li>
+      </ul>
+    </div>
+  </section>`,
   styleUrls: ['./product-list.component.css'],
 })
 export class ProductListComponent {
@@ -14,9 +24,8 @@ export class ProductListComponent {
 
   constructor(private cartService: CartService) {}
 
+  // Within ProductListComponent
   addToCart(product: any) {
-    this.cartService.addItem(product).subscribe(() => {
-      alert(`${product.name} added to cart!`);
-    });
+    this.cartService.addItem(product).subscribe();
   }
 }
