@@ -14,8 +14,9 @@ export class ProductListComponent {
 
   constructor(private cartService: CartService) {}
 
-  // Within ProductListComponent
   addToCart(product: any) {
-    this.cartService.addItem(product).subscribe();
+    this.cartService.addItem(product).subscribe(() => {
+      alert(`${product.name} added to cart!`);
+    });
   }
 }
