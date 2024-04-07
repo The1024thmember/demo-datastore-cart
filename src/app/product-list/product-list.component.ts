@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { CartService } from '../cart.service';
 
 @Component({
@@ -34,10 +35,12 @@ export class ProductListComponent {
 
   constructor(private cartService: CartService) {}
 
-  addToCart(product: any) {
+  async addToCart(product: any) {
     product.quantity++;
-    this.cartService.addItem(product).subscribe((items) => {
-      this.cartItems = items;
+    await firstValueFrom(this.cartService.addItem(product)).then(() => {
+      this.cartService.cart$.subscribe((item) => {
+        this.cartItems = item;
+      });
     });
   }
 
