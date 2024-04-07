@@ -3,7 +3,7 @@ import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-product-list',
-  template: `<section>
+  template: `
     <div>
       <h2>Products</h2>
       <ul>
@@ -13,7 +13,7 @@ import { CartService } from '../cart.service';
         </li>
       </ul>
     </div>
-  </section>`,
+  `,
   styleUrls: ['./product-list.component.css'],
 })
 export class ProductListComponent {
@@ -24,8 +24,9 @@ export class ProductListComponent {
 
   constructor(private cartService: CartService) {}
 
-  // Within ProductListComponent
   addToCart(product: any) {
-    this.cartService.addItem(product).subscribe();
+    this.cartService.addItem(product).subscribe(() => {
+      alert(`${product.name} added to cart!`);
+    });
   }
 }
