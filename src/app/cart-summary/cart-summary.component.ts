@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
 import { CartService } from '../cart.service';
+import { formatCurrency } from '../helper';
 
 @Component({
   selector: 'app-cart-summary',
@@ -14,53 +16,45 @@ import { CartService } from '../cart.service';
             <th>Cost</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let item of cartItems">
-            <td>{{ item.name }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ formatCurrency(item.price) }}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr class="total-line">
-            <td colspan="2" class="total-amount">Total Amount:</td>
-            <td class="total-amount">{{ formatCurrency(getTotalCost()) }}</td>
-          </tr>
-        </tfoot>
+        <ng-container *ngIf="cartItems$ | async as cartItems">
+          <tbody>
+            <tr *ngFor="let item of cartItems">
+              <ng-container *ngIf="item.quantity > 0">
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ formatCurrency(item.price * item.quantity) }}</td>
+              </ng-container>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-line">
+              <td colspan="2" class="total-amount">Total Amount:</td>
+              <td class="total-amount">
+                {{ formatCurrency(getTotalCost(cartItems)) }}
+              </td>
+            </tr>
+          </tfoot>
+        </ng-container>
       </table>
     </div>
   `,
   styleUrls: ['./cart-summary.component.css'],
 })
 export class CartSummaryComponent implements OnInit {
-  cartItems: any[] = [];
+  formatCurrency = formatCurrency;
+
+  cartItems$: Observable<any> | undefined;
 
   constructor(private cartService: CartService) {}
 
   ngOnInit() {
-    this.fetchCartItems();
+    this.cartItems$ = this.cartService.fetchCartItems();
   }
 
-  fetchCartItems() {
-    this.cartService.cart$.subscribe((items) => {
-      this.cartItems = items;
-    });
-  }
-
-  removeItem(itemId: string) {
-    this.cartService.removeItem(itemId).subscribe(() => {
-      this.fetchCartItems(); // Refresh the cart items list
-    });
-  }
-
-  getTotalCost() {
-    return this.cartItems.reduce(
+  getTotalCost(cartItems: any) {
+    return cartItems.reduce(
       (acc: any, item: any) => acc + item.price * item.quantity,
       0
     );
-  }
-
-  formatCurrency(value: number) {
-    return `$${value.toFixed(2)}`;
   }
 }

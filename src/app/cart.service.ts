@@ -25,8 +25,8 @@
 
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -38,25 +38,34 @@ export class CartService {
 
   constructor(private http: HttpClient) {}
 
-  fetchCartItems(): void {
-    this.http.get<any[]>(this.baseUrl).subscribe((items) => {
-      this.cartSubject.next(items);
-    });
-  }
-
-  addItem(item: any): Observable<any> {
-    return this.http.post(this.baseUrl, item).pipe(
-      tap(() => {
-        this.fetchCartItems(); // Refresh the cart items after adding
-      })
+  fetchCartItems(): Observable<any> {
+    return this.http.get<any[]>(this.baseUrl).pipe(
+      tap((items) => this.cartSubject.next(items)),
+      switchMap(() => this.cart$)
     );
   }
 
-  removeItem(itemId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${itemId}`).pipe(
-      tap(() => {
-        this.fetchCartItems(); // Refresh the cart items after removing
-      })
+  modifyItem(item: any): Promise<any> {
+    return firstValueFrom(
+      this.http.post(this.baseUrl, item, { observe: 'response' }).pipe(
+        map(async (r: any) => {
+          await firstValueFrom(this.fetchCartItems()); // Refresh the cart items after adding
+          return r.status;
+        })
+      )
+    );
+  }
+
+  removeItem(itemId: string): Promise<any> {
+    return firstValueFrom(
+      this.http
+        .delete(`${this.baseUrl}/${itemId}`, { observe: 'response' })
+        .pipe(
+          map(async (r: any) => {
+            await firstValueFrom(this.fetchCartItems()); // Refresh the cart items after adding
+            return r.status;
+          })
+        )
     );
   }
 }

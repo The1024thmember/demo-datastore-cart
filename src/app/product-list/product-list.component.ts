@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { Observable, startWith } from 'rxjs';
 import { CartService } from '../cart.service';
+import { formatCurrency } from '../helper';
 
 @Component({
   selector: 'app-product-list',
@@ -9,63 +10,70 @@ import { CartService } from '../cart.service';
       <h2>Products</h2>
       <div *ngFor="let product of products" class="product-card">
         <div class="product-image">
-          <!-- Placeholder for product image, could use an actual <img> tag -->
-          Image
+          <img [src]="'assets/' + product.id + '.png'" />
         </div>
         <h3>{{ product.name }}</h3>
         <p>{{ formatCurrency(product.price) }}</p>
-        <div class="product-controls">
-          <button (click)="addToCart(product)">Add to Cart</button>
-          <span>{{ product.quantity }}</span>
-          <button (click)="removeFromCart(product)">Remove</button>
+        <div *ngIf="cartItems$ | async as cartItems" class="product-controls">
+          <button (click)="addToCart(cartItems, product)">+</button>
+          <span>
+            {{ getProductQuantity(cartItems, product) }}
+          </span>
+          <ng-container>
+            <button
+              [disabled]="!isProductInCart(cartItems, product)"
+              (click)="removeFromCart(product, cartItems)"
+            >
+              -
+            </button>
+          </ng-container>
         </div>
       </div>
     </div>
   `,
   styleUrls: ['./product-list.component.css'],
 })
-export class ProductListComponent {
+export class ProductListComponent implements OnInit {
+  formatCurrency = formatCurrency;
+
   products = [
-    { id: '1', name: 'Elegant Desk Lamp', price: 49.99, quantity: 0 },
-    { id: '2', name: 'Modern Armchair', price: 149.99, quantity: 0 },
+    { id: '1', name: 'Elegant Desk Lamp', price: 49.99 },
+    { id: '2', name: 'Modern Armchair', price: 149.99 },
     // More products...
   ];
 
-  cartItems: any = [];
+  cartItems$: Observable<any> | undefined;
 
   constructor(private cartService: CartService) {}
 
-  async addToCart(product: any) {
-    product.quantity++;
-    await firstValueFrom(this.cartService.addItem(product)).then(() => {
-      this.cartService.cart$.subscribe((item) => {
-        this.cartItems = item;
-      });
+  ngOnInit() {
+    this.cartItems$ = this.cartService.fetchCartItems().pipe(startWith([]));
+  }
+
+  async addToCart(cartItems: any, product: any) {
+    const currentQuantity = this.getProductQuantity(cartItems, product);
+    product.quantity = currentQuantity + 1;
+    this.cartService.modifyItem(product).then((status) => {
+      console.log('adding  item status:', status);
     });
   }
 
-  removeFromCart(product: any) {
-    const cartItem = this.cartItems.find((item: any) => item.id === product.id);
+  isProductInCart(cartItems: any, product: any) {
+    return !!cartItems.find((item: any) => item.id === product.id);
+  }
+
+  getProductQuantity(cartItems: any, product: any) {
+    return cartItems.find((item: any) => item.id === product.id)?.quantity ?? 0;
+  }
+
+  removeFromCart(product: any, cartItems: any) {
+    const cartItem = cartItems.find((item: any) => item.id === product.id);
     if (cartItem && cartItem.quantity > 0) {
-      cartItem.quantity--;
-      // Additional logic to handle removing from cart
-      if (cartItem.quantity === 0) {
-        this.cartItems = this.cartItems.filter(
-          (item: any) => item.id !== product.id
-        );
-      }
-      this.updateProductListQuantity(product.id, -1);
+      const currentQuantity = this.getProductQuantity(cartItems, product);
+      product.quantity = currentQuantity - 1;
     }
-  }
-
-  updateProductListQuantity(productId: string, change: number) {
-    const product = this.products.find((item) => item.id === productId);
-    if (product) {
-      product.quantity += change;
-    }
-  }
-
-  formatCurrency(value: number) {
-    return `$${value.toFixed(2)}`;
+    this.cartService.modifyItem(product).then((status) => {
+      console.log('adding  item status:', status);
+    });
   }
 }

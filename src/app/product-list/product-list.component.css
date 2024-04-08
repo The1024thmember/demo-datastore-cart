@@ -14,6 +14,15 @@
   margin-bottom: 10px;
 }
 
+.product-image img {
+  max-height: 100px; /* Ensures the image height does not exceed the container's height */
+  max-width: 100%; /* Ensures the image width does not exceed the container's width */
+  width: auto; /* Maintains the image's aspect ratio */
+  height: auto; /* Maintains the image's aspect ratio */
+  display: block; /* Prevents default inline behavior that includes extra space below the image */
+  margin: 0 auto; /* Centers the image horizontally if it's not as wide as the container */
+}
+
 .product-controls {
   display: flex;
   justify-content: space-between;
