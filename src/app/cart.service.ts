@@ -1,60 +1,24 @@
-// import { HttpClient } from '@angular/common/http';
-// import { Injectable } from '@angular/core';
-// import { Observable } from 'rxjs';
-
-// @Injectable({
-//   providedIn: 'root',
-// })
-// export class CartService {
-//   private baseUrl = 'http://localhost:3000/cart';
-
-//   constructor(private http: HttpClient) {}
-
-//   getCartItems(): Observable<any[]> {
-//     return this.http.get<any[]>(this.baseUrl);
-//   }
-
-//   addItem(item: any): Observable<any> {
-//     return this.http.post(this.baseUrl, item);
-//   }
-
-//   removeItem(itemId: string): Observable<any> {
-//     return this.http.delete(`${this.baseUrl}/${itemId}`);
-//   }
-// }
-
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
-import { mapTo, switchMap, tap } from 'rxjs/operators';
+import { firstValueFrom, map, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CartService {
   private baseUrl = 'http://localhost:3000/cart';
-  private cartSubject = new BehaviorSubject<any[]>([]);
-  cart$ = this.cartSubject.asObservable(); // Public observable for components to subscribe to
 
   constructor(private http: HttpClient) {}
 
-  fetchCartItems(): Observable<any> {
-    return this.http.get<any[]>(this.baseUrl).pipe(
-      tap((items) => this.cartSubject.next(items)),
-      switchMap(() => this.cart$)
-    );
+  fetchCartItems(): Observable<any[]> {
+    return this.http.get<any[]>(this.baseUrl);
   }
 
   modifyItem(item: any): Promise<any> {
     return firstValueFrom(
-      this.http.post(this.baseUrl, item, { observe: 'response' }).pipe(
-        switchMap((response) => {
-          return this.fetchCartItems().pipe(
-            // Ignore the result of fetchCartItems, just pass the original response through
-            mapTo(response.status)
-          );
-        })
-      )
+      this.http
+        .post(this.baseUrl, item, { observe: 'response' })
+        .pipe(map((r) => r.status))
     );
   }
 
@@ -62,14 +26,7 @@ export class CartService {
     return firstValueFrom(
       this.http
         .delete(`${this.baseUrl}/${itemId}`, { observe: 'response' })
-        .pipe(
-          switchMap((response) => {
-            return this.fetchCartItems().pipe(
-              // Ignore the result of fetchCartItems, just pass the original response through
-              mapTo(response.status)
-            );
-          })
-        )
+        .pipe(map((r) => r.status))
     );
   }
 }

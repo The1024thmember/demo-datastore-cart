@@ -1,22 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, startWith } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { CartService } from '../cart.service';
 import { formatCurrency } from '../helper';
 
 @Component({
   selector: 'app-product-list',
   template: `
-    <div>
-      <div *ngFor="let product of products" class="product-card">
+    <div *ngIf="cartItems$ | async as cartItems">
+      <div *ngFor="let product of productsWithQuantity" class="product-card">
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />
         </div>
         <h3>{{ product.name }}</h3>
-        <p>{{ formatCurrency(product.price) }}</p>
-        <div *ngIf="cartItems$ | async as cartItems" class="product-controls">
+        <p>{{ product.quantity }}</p>
+        <div class="product-controls">
           <button (click)="addToCart(cartItems, product)">+</button>
           <span>
-            {{ getProductQuantity(cartItems, product) }}
+            {{ product.quantity }}
           </span>
           <ng-container>
             <button
@@ -35,18 +35,34 @@ import { formatCurrency } from '../helper';
 export class ProductListComponent implements OnInit {
   formatCurrency = formatCurrency;
 
+  // Assuming this is a list of product returned from the backend API
   products = [
-    { id: '1', name: 'Elegant Desk Lamp', price: 49.99 },
-    { id: '2', name: 'Modern Armchair', price: 149.99 },
-    // More products...
+    { id: '1', name: 'Elegant Desk Lamp', price: 49.99, quantity: 0 },
+    { id: '2', name: 'Modern Armchair', price: 149.99, quantity: 0 },
   ];
+
+  // The product with quantity, a local front-end in memory array
+  productsWithQuantity: any[] = [];
 
   cartItems$: Observable<any> | undefined;
 
   constructor(private cartService: CartService) {}
 
   ngOnInit() {
-    this.cartItems$ = this.cartService.fetchCartItems().pipe(startWith([]));
+    this.cartItems$ = this.cartService.fetchCartItems().pipe(
+      tap((cartItems) => {
+        this.products.forEach((product) => {
+          const selectedProduct = cartItems.find(
+            (item) => product.id === item.id
+          );
+          if (selectedProduct) {
+            this.productsWithQuantity.push(selectedProduct);
+          } else {
+            this.productsWithQuantity.push(product);
+          }
+        });
+      })
+    );
   }
 
   async addToCart(cartItems: any, product: any) {
