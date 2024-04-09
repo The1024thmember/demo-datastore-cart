@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 import { CartService } from '../cart.service';
 import { formatCurrency } from '../helper';
 
@@ -36,6 +36,9 @@ import { formatCurrency } from '../helper';
           </tfoot>
         </ng-container>
       </table>
+      <button class="fetch-summary-btn" (click)="fetchLatestCartItems()">
+        Get Summary
+      </button>
     </div>
   `,
   styleUrls: ['./cart-summary.component.css'],
@@ -56,5 +59,10 @@ export class CartSummaryComponent implements OnInit {
       (acc: any, item: any) => acc + item.price * item.quantity,
       0
     );
+  }
+
+  fetchLatestCartItems() {
+    // Fetch the latest cart items and refresh the cartItems$ observable
+    this.cartItems$ = this.cartService.fetchCartItems().pipe(take(1));
   }
 }

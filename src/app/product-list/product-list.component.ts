@@ -12,7 +12,6 @@ import { formatCurrency } from '../helper';
           <img [src]="'assets/' + product.id + '.png'" />
         </div>
         <h3>{{ product.name }}</h3>
-        <p>{{ product.quantity }}</p>
         <div class="product-controls">
           <button (click)="addToCart(cartItems, product)">+</button>
           <span>
