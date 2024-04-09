@@ -1,22 +1,21 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, take, tap } from 'rxjs';
 import { CartService } from '../cart.service';
 import { formatCurrency } from '../helper';
 
 @Component({
   selector: 'app-product-list',
   template: `
-    <div>
-      <div *ngFor="let product of products" class="product-card">
+    <div *ngIf="cartItems$ | async as cartItems">
+      <div *ngFor="let product of productsWithQuantity" class="product-card">
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />
         </div>
         <h3>{{ product.name }}</h3>
-        <p>{{ formatCurrency(product.price) }}</p>
-        <div *ngIf="cartItems$ | async as cartItems" class="product-controls">
+        <div class="product-controls">
           <button (click)="addToCart(cartItems, product)">+</button>
           <span>
-            {{ getProductQuantity(cartItems, product) }}
+            {{ product.quantity }}
           </span>
           <ng-container>
             <button
@@ -37,8 +36,8 @@ export class ProductListComponent implements OnInit {
 
   // Assuming this is a list of product returned from the backend API
   products = [
-    { id: '1', name: 'Elegant Desk Lamp', price: 49.99 },
-    { id: '2', name: 'Modern Armchair', price: 149.99 },
+    { id: '1', name: 'Elegant Desk Lamp', price: 49.99, quantity: 0 },
+    { id: '2', name: 'Modern Armchair', price: 149.99, quantity: 0 },
     // More products...
   ];
 
@@ -62,7 +61,8 @@ export class ProductListComponent implements OnInit {
             this.productsWithQuantity.push(product);
           }
         });
-      })
+      }),
+      take(1)
     );
   }
 

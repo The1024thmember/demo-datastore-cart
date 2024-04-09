@@ -9,14 +9,16 @@ import { mapTo, switchMap, tap } from 'rxjs/operators';
 export class CartService {
   private baseUrl = 'http://localhost:3000/cart';
   private cartSubject = new BehaviorSubject<any[]>([]);
-  cart$ = this.cartSubject.asObservable(); // Public observable for components to subscribe to
+  cart$ = this.cartSubject.asObservable().pipe(); // Public observable for components to subscribe to
 
   constructor(private http: HttpClient) {}
 
   fetchCartItems(): Observable<any> {
     return this.http.get<any[]>(this.baseUrl).pipe(
-      tap((items) => this.cartSubject.next(items)),
-      switchMap(() => this.cart$)
+      tap((items) => {
+        this.cartSubject.next(items);
+      }),
+      switchMap(() => this.cart$.pipe())
     );
   }
 
