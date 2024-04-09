@@ -1,0 +1,12 @@
+.products-container {
+  display: flex;
+  justify-content: center; /* This will center the child items horizontally */
+  flex-wrap: wrap; /* This allows items to wrap onto new lines as needed */
+  gap: 40px; /* This adds space between the cards */
+}
+
+.cart-summary {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}

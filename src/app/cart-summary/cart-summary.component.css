@@ -1,7 +1,7 @@
 
 
 .summary-table {
-  width: 100%;
+  width: 1000px;
   border-collapse: collapse;
 }
 
@@ -25,3 +25,4 @@
   padding: 8px 0;
   font-weight: bold;
 }
+
