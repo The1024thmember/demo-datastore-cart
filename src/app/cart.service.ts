@@ -26,7 +26,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { mapTo, switchMap, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -48,9 +48,11 @@ export class CartService {
   modifyItem(item: any): Promise<any> {
     return firstValueFrom(
       this.http.post(this.baseUrl, item, { observe: 'response' }).pipe(
-        map(async (r: any) => {
-          await firstValueFrom(this.fetchCartItems()); // Refresh the cart items after adding
-          return r.status;
+        switchMap((response) => {
+          return this.fetchCartItems().pipe(
+            // Ignore the result of fetchCartItems, just pass the original response through
+            mapTo(response.status)
+          );
         })
       )
     );
@@ -61,9 +63,11 @@ export class CartService {
       this.http
         .delete(`${this.baseUrl}/${itemId}`, { observe: 'response' })
         .pipe(
-          map(async (r: any) => {
-            await firstValueFrom(this.fetchCartItems()); // Refresh the cart items after adding
-            return r.status;
+          switchMap((response) => {
+            return this.fetchCartItems().pipe(
+              // Ignore the result of fetchCartItems, just pass the original response through
+              mapTo(response.status)
+            );
           })
         )
     );
