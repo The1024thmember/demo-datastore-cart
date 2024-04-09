@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, startWith } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { CartService } from '../cart.service';
 import { formatCurrency } from '../helper';
 
@@ -35,18 +35,35 @@ import { formatCurrency } from '../helper';
 export class ProductListComponent implements OnInit {
   formatCurrency = formatCurrency;
 
+  // Assuming this is a list of product returned from the backend API
   products = [
     { id: '1', name: 'Elegant Desk Lamp', price: 49.99 },
     { id: '2', name: 'Modern Armchair', price: 149.99 },
     // More products...
   ];
 
+  // The product with quantity, a local front-end in memory array
+  productsWithQuantity: any[] = [];
+
   cartItems$: Observable<any> | undefined;
 
   constructor(private cartService: CartService) {}
 
   ngOnInit() {
-    this.cartItems$ = this.cartService.fetchCartItems().pipe(startWith([]));
+    this.cartItems$ = this.cartService.fetchCartItems().pipe(
+      tap((cartItems) => {
+        this.products.forEach((product) => {
+          const selectedProduct = cartItems.find(
+            (item: any) => product.id === item.id
+          );
+          if (selectedProduct) {
+            this.productsWithQuantity.push(selectedProduct);
+          } else {
+            this.productsWithQuantity.push(product);
+          }
+        });
+      })
+    );
   }
 
   async addToCart(cartItems: any, product: any) {
