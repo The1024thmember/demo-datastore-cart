@@ -7,6 +7,7 @@ import { formatCurrency } from '../helper';
   selector: 'app-product-list',
   template: `
     <div *ngIf="cartItems$ | async as cartItems">
+      <h2>Cart Items</h2>
       <div *ngFor="let product of productsWithQuantity" class="product-card">
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />

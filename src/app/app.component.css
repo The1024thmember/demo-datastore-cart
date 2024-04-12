@@ -3,6 +3,8 @@
   justify-content: center; /* This will center the child items horizontally */
   flex-wrap: wrap; /* This allows items to wrap onto new lines as needed */
   gap: 40px; /* This adds space between the cards */
+  text-align: center;
+  padding-bottom: 20px;
 }
 
 .cart-summary {
