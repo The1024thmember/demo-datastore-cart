@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable, take, tap } from 'rxjs';
-import { CartService } from '../cart.service';
+import { Datastore } from '../datastore/abstractions/datastore';
+import { ExampleCollection } from '../datastore/collections';
 import { formatCurrency } from '../helper';
 
 @Component({
@@ -34,7 +35,7 @@ import { formatCurrency } from '../helper';
           <ng-container>
             <button
               [disabled]="!isProductInCart(cartItems, product)"
-              (click)="removeFromCart(product, cartItems)"
+              (click)="addToCart(product, cartItems)"
             >
               -
             </button>
@@ -87,32 +88,48 @@ export class ProductListComponent implements OnInit {
 
   selectedCategory = '';
 
-  constructor(private cartService: CartService) {}
+  constructor(private datastore: Datastore) {}
 
   ngOnInit() {
-    this.cartItems$ = this.cartService.fetchCartItems().pipe(
-      tap((cartItems) => {
-        this.products.forEach((product) => {
-          const selectedProduct = cartItems.find(
-            (item: any) => product.id === item.id
-          );
-          if (selectedProduct) {
-            this.productsWithQuantity.push(selectedProduct);
-          } else {
-            this.productsWithQuantity.push(product);
-          }
-        });
-      }),
-      take(1)
-    );
+    this.cartItems$ = this.datastore
+      .documents<ExampleCollection>('example', (query) =>
+        query.where('id', 'in', [1, 2, 3, 4])
+      )
+      .valueChanges()
+      .pipe(
+        tap((cartItems) => {
+          this.products.forEach((product) => {
+            const selectedProduct = cartItems.find(
+              (item: any) => product.id === item.id
+            );
+            if (selectedProduct) {
+              this.productsWithQuantity.push(selectedProduct);
+            } else {
+              this.productsWithQuantity.push(product);
+            }
+          });
+        }),
+        take(1)
+      );
   }
 
   async addToCart(cartItems: any, product: any) {
     const currentQuantity = this.getProductQuantity(cartItems, product);
-    product.quantity = currentQuantity + 1;
-    this.cartService.modifyItem(product).then((status) => {
-      console.log('adding  item status:', status);
+    this.datastore
+      .documents<ExampleCollection>('example', (query) =>
+        query.where('id', '==', 1)
+      )
+      .update(product.id, { ...product, quantity: currentQuantity + 1 });
+
+    console.log('{ ...product, quantity: currentQuantity + 1 }:', {
+      ...product,
+      quantity: currentQuantity + 1,
     });
+    // const currentQuantity = this.getProductQuantity(cartItems, product);
+    // product.quantity = currentQuantity + 1;
+    // this.cartService.modifyItem(product).then((status) => {
+    //   console.log('adding  item status:', status);
+    // });
   }
 
   isProductInCart(cartItems: any, product: any) {
@@ -123,31 +140,25 @@ export class ProductListComponent implements OnInit {
     return cartItems.find((item: any) => item.id === product.id)?.quantity ?? 0;
   }
 
-  removeFromCart(product: any, cartItems: any) {
-    const cartItem = cartItems.find((item: any) => item.id === product.id);
-    if (cartItem && cartItem.quantity > 0) {
-      const currentQuantity = this.getProductQuantity(cartItems, product);
-      product.quantity = currentQuantity - 1;
-    }
-    this.cartService.modifyItem(product).then((status) => {
-      console.log('adding  item status:', status);
-    });
-  }
-
   fetchProductsByCategory(category: string): void {
-    this.cartItems$ = this.cartService.fetchProductsByCategory(category).pipe(
-      tap((cartItems) => {
-        this.productsWithQuantity = [];
-        this.products.forEach((product) => {
-          const selectedProduct = cartItems.find(
-            (item: any) => product.id === item.id
-          );
-          if (selectedProduct) {
-            this.productsWithQuantity.push(selectedProduct);
-          }
-        });
-      }),
-      take(1)
-    );
+    this.cartItems$ = this.datastore
+      .documents<ExampleCollection>('example', (query) =>
+        query.where('category', '==', category)
+      )
+      .valueChanges()
+      .pipe(
+        tap((cartItems) => {
+          this.productsWithQuantity = [];
+          this.products.forEach((product) => {
+            const selectedProduct = cartItems.find(
+              (item: any) => product.id === item.id
+            );
+            if (selectedProduct) {
+              this.productsWithQuantity.push(selectedProduct);
+            }
+          });
+        }),
+        take(1)
+      );
   }
 }

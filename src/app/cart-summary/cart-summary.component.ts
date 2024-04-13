@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CartService } from '../cart.service';
+import { Datastore } from '../datastore/abstractions/datastore';
+import { ExampleCollection } from '../datastore/collections';
 import { formatCurrency } from '../helper';
 
 @Component({
@@ -45,10 +46,15 @@ export class CartSummaryComponent implements OnInit {
 
   cartItems$: Observable<any> | undefined;
 
-  constructor(private cartService: CartService) {}
+  constructor(private datastore: Datastore) {}
 
   ngOnInit() {
-    this.cartItems$ = this.cartService.fetchCartItems();
+    this.cartItems$ = this.datastore
+      .documents<ExampleCollection>('example', (query) =>
+        query.where('id', 'in', [1, 2, 3, 4])
+      )
+      .valueChanges();
+    this.cartItems$.subscribe((x) => console.log('results:', x));
   }
 
   getTotalCost(cartItems: any) {
