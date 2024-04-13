@@ -7,7 +7,7 @@ import { formatCurrency } from '../helper';
   selector: 'app-product-list',
   template: `
     <div *ngIf="cartItems$ | async as cartItems">
-      <h2>Cart Items</h2>
+      <h2>Product Items</h2>
       <div *ngFor="let product of productsWithQuantity" class="product-card">
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />
@@ -37,8 +37,20 @@ export class ProductListComponent implements OnInit {
 
   // Assuming this is a list of product returned from the backend API
   products = [
-    { id: '1', name: 'Elegant Desk Lamp', price: 49.99, quantity: 0 },
-    { id: '2', name: 'Modern Armchair', price: 149.99, quantity: 0 },
+    {
+      id: '1',
+      category: 'Lighting',
+      name: 'Elegant Desk Lamp',
+      price: 49.99,
+      quantity: 0,
+    },
+    {
+      id: '2',
+      category: 'Furniture',
+      name: 'Modern Armchair',
+      price: 149.99,
+      quantity: 0,
+    },
     // More products...
   ];
 
