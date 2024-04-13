@@ -1,13 +1,20 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
-import { mapTo, switchMap, tap } from 'rxjs/operators';
+import {
+  BehaviorSubject,
+  firstValueFrom,
+  map,
+  Observable,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CartService {
   private baseUrl = 'http://localhost:3000/cart';
+
   private cartSubject = new BehaviorSubject<any[]>([]);
   cart$ = this.cartSubject.asObservable().pipe(); // Public observable for components to subscribe to
 
@@ -25,12 +32,16 @@ export class CartService {
   modifyItem(item: any): Promise<any> {
     return firstValueFrom(
       this.http.post(this.baseUrl, item, { observe: 'response' }).pipe(
-        switchMap((response) => {
-          return this.fetchCartItems().pipe(
-            // Ignore the result of fetchCartItems, just pass the original response through
-            mapTo(response.status)
-          );
-        })
+        tap(() => {
+          const updatedItems = this.cartSubject.value.map((orignalItem) => {
+            if (orignalItem.id === item.id) {
+              return item;
+            }
+            return orignalItem;
+          });
+          this.cartSubject.next(updatedItems);
+        }),
+        map((r) => r.status)
       )
     );
   }
@@ -39,14 +50,7 @@ export class CartService {
     return firstValueFrom(
       this.http
         .delete(`${this.baseUrl}/${itemId}`, { observe: 'response' })
-        .pipe(
-          switchMap((response) => {
-            return this.fetchCartItems().pipe(
-              // Ignore the result of fetchCartItems, just pass the original response through
-              mapTo(response.status)
-            );
-          })
-        )
+        .pipe(map((r) => r.status))
     );
   }
 }
