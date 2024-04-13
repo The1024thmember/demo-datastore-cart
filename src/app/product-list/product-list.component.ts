@@ -11,6 +11,7 @@ import { formatCurrency } from '../helper';
       <!-- product-list.component.html -->
       <div>
         <select
+          [(ngModel)]="selectedCategory"
           #categorySelect
           (change)="fetchProductsByCategory(categorySelect.value)"
         >
@@ -134,17 +135,19 @@ export class ProductListComponent implements OnInit {
   }
 
   fetchProductsByCategory(category: string): void {
-    this.cartService.fetchProductsByCategory(category).subscribe({
-      next: (products) => {
-        console.log('category:', category);
-        this.productsWithQuantity = products;
-        console.log('this.productsWithQuantity:', this.productsWithQuantity);
-        // Update quantities based on cart items
-        // ...
-      },
-      error: (error) => {
-        console.error('There was an error!', error);
-      },
-    });
+    this.cartItems$ = this.cartService.fetchProductsByCategory(category).pipe(
+      tap((cartItems) => {
+        this.productsWithQuantity = [];
+        this.products.forEach((product) => {
+          const selectedProduct = cartItems.find(
+            (item: any) => product.id === item.id
+          );
+          if (selectedProduct) {
+            this.productsWithQuantity.push(selectedProduct);
+          }
+        });
+      }),
+      take(1)
+    );
   }
 }

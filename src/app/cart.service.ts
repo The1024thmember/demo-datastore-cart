@@ -30,13 +30,14 @@ export class CartService {
   }
 
   fetchProductsByCategory(category: string): Observable<any[]> {
-    // Construct the query parameter string based on category
-
-    console.log('category:', category);
     const queryParam = category ? `?category=${category}` : '';
-    console.log('queryParamL:', queryParam);
-    // Fetch the items with the category query parameter
-    return this.http.get<any[]>(`${this.baseUrl}${queryParam}`);
+
+    return this.http.get<any[]>(`${this.baseUrl}${queryParam}`).pipe(
+      tap((items) => {
+        this.cartSubject.next(items);
+      }),
+      switchMap(() => this.cart$.pipe())
+    );
   }
 
   modifyItem(item: any): Promise<any> {
@@ -50,6 +51,7 @@ export class CartService {
             return orignalItem;
           });
           this.cartSubject.next(updatedItems);
+          console.log(' this.cartSubject.value:', this.cartSubject.value);
         }),
         map((r) => r.status)
       )
