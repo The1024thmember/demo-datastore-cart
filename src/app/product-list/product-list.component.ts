@@ -8,6 +8,18 @@ import { formatCurrency } from '../helper';
   template: `
     <div *ngIf="cartItems$ | async as cartItems">
       <h2>Product Items</h2>
+      <!-- product-list.component.html -->
+      <div>
+        <select
+          #categorySelect
+          (change)="fetchProductsByCategory(categorySelect.value)"
+        >
+          <option value="">All Categories</option>
+          <option value="Lighting">Lighting</option>
+          <option value="Furniture">Furniture</option>
+        </select>
+      </div>
+
       <div *ngFor="let product of productsWithQuantity" class="product-card">
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />
@@ -51,13 +63,28 @@ export class ProductListComponent implements OnInit {
       price: 149.99,
       quantity: 0,
     },
-    // More products...
+    {
+      id: '3',
+      category: 'Lighting',
+      name: 'Luminous Floor Lamp',
+      price: 89.99,
+      quantity: 0,
+    },
+    {
+      id: '4',
+      category: 'Furniture',
+      name: 'Serenity Chaise Lounge',
+      price: 278.99,
+      quantity: 0,
+    },
   ];
 
   // The product with quantity, a local front-end in memory array
   productsWithQuantity: any[] = [];
 
   cartItems$: Observable<any> | undefined;
+
+  selectedCategory = '';
 
   constructor(private cartService: CartService) {}
 
@@ -103,6 +130,21 @@ export class ProductListComponent implements OnInit {
     }
     this.cartService.modifyItem(product).then((status) => {
       console.log('adding  item status:', status);
+    });
+  }
+
+  fetchProductsByCategory(category: string): void {
+    this.cartService.fetchProductsByCategory(category).subscribe({
+      next: (products) => {
+        console.log('category:', category);
+        this.productsWithQuantity = products;
+        console.log('this.productsWithQuantity:', this.productsWithQuantity);
+        // Update quantities based on cart items
+        // ...
+      },
+      error: (error) => {
+        console.error('There was an error!', error);
+      },
     });
   }
 }

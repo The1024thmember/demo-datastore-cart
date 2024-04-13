@@ -29,6 +29,16 @@ export class CartService {
     );
   }
 
+  fetchProductsByCategory(category: string): Observable<any[]> {
+    // Construct the query parameter string based on category
+
+    console.log('category:', category);
+    const queryParam = category ? `?category=${category}` : '';
+    console.log('queryParamL:', queryParam);
+    // Fetch the items with the category query parameter
+    return this.http.get<any[]>(`${this.baseUrl}${queryParam}`);
+  }
+
   modifyItem(item: any): Promise<any> {
     return firstValueFrom(
       this.http.post(this.baseUrl, item, { observe: 'response' }).pipe(
