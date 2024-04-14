@@ -31,14 +31,14 @@ import { formatCurrency } from '../helper';
         </div>
         <h3>{{ product.name }}</h3>
         <div class="product-controls">
-          <button (click)="modifyCart(cartItems, product, '+')">+</button>
+          <button (click)="modifyCart(product, '+')">+</button>
           <span>
             {{ product.quantity }}
           </span>
           <ng-container>
             <button
               [disabled]="!isProductInCart(cartItems, product)"
-              (click)="modifyCart(cartItems, product, '-')"
+              (click)="modifyCart(product, '-')"
             >
               -
             </button>
@@ -98,9 +98,19 @@ export class ProductListComponent implements OnInit {
   ngOnInit() {
     this.cartItems$ = this.datastore
       .documents<ExampleCollection>('example', (query) =>
-        query
-          .where('id', 'in', [1, 2, 3, 4])
-          .where('category', '==', this.selectedCategory$)
+        this.selectedCategory$.pipe(
+          map((selectedCategory) => {
+            if (selectedCategory) {
+              return query
+                .where('id', 'in', [1, 2, 3, 4])
+                .where('category', '==', this.selectedCategory$);
+            }
+
+            return query
+              .where('id', 'in', [1, 2, 3, 4])
+              .where('category', 'in', ['Furniture', 'Lighting']);
+          })
+        )
       )
       .valueChanges();
 
@@ -121,24 +131,21 @@ export class ProductListComponent implements OnInit {
     );
   }
 
-  async modifyCart(cartItems: any, product: any, action: string) {
-    const currentQuantity = this.getProductQuantity(cartItems, product);
+  async modifyCart(product: any, action: string) {
+    // Why update the document here will remove the filter in the queries ids?
+    const delta = {
+      ...product,
+      quantity: action === '+' ? product.quantity + 1 : product.quantity - 1,
+    };
     this.datastore
       .documents<ExampleCollection>('example', (query) =>
         query.where('id', '==', 1)
       )
-      .update(product.id, {
-        ...product,
-        quantity: action === '+' ? currentQuantity + 1 : currentQuantity - 1,
-      });
+      .update(product.id, delta);
   }
 
   isProductInCart(cartItems: any, product: any) {
     return !!cartItems.find((item: any) => item.id === product.id);
-  }
-
-  getProductQuantity(cartItems: any, product: any) {
-    return cartItems.find((item: any) => item.id === product.id)?.quantity ?? 0;
   }
 
   fetchProductsByCategory(category: string): void {

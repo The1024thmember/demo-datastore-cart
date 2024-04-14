@@ -2,6 +2,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { environment } from 'src/environment/environment';
 import { HTTP_CONFIG } from 'src/services/httpsService';
 import { AppComponent } from './app.component';
@@ -17,6 +18,9 @@ import { ProductListComponent } from './product-list/product-list.component';
     HttpClientModule,
     FormsModule,
     DatastoreExampleModule,
+    StoreDevtoolsModule.instrument({
+      maxAge: 25,
+    }),
     DatastoreModule.initialize({
       webSocketUrl: environment.datastoreConfig.webSocketUrl,
       enableStoreFreeze: environment.datastoreConfig.enableStoreFreeze,
