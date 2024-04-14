@@ -29,6 +29,7 @@ export function exampleReducer(
     case 'API_UPDATE_SUCCESS':
       if (action.payload.collection === 'example') {
         const { result, ref } = action.payload;
+
         return mergeDocument<ExampleCollection>(
           state,
           documentTransformer([result], exampleTransformer), // ensure the result is coming as a list, since push normally return one object, while the transformer expects it to be a list

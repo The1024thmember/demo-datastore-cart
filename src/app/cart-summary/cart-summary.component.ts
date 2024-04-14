@@ -54,7 +54,6 @@ export class CartSummaryComponent implements OnInit {
         query.where('id', 'in', [1, 2, 3, 4])
       )
       .valueChanges();
-    this.cartItems$.subscribe((x) => console.log('results:', x));
   }
 
   getTotalCost(cartItems: any) {

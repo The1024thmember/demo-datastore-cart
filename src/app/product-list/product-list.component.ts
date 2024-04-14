@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, take, tap } from 'rxjs';
+import { BehaviorSubject, filter, map, Observable } from 'rxjs';
 import { Datastore } from '../datastore/abstractions/datastore';
 import { ExampleCollection } from '../datastore/collections';
 import { formatCurrency } from '../helper';
@@ -22,20 +22,23 @@ import { formatCurrency } from '../helper';
         </select>
       </div>
 
-      <div *ngFor="let product of productsWithQuantity" class="product-card">
+      <div
+        *ngFor="let product of productsWithQuantity$ | async"
+        class="product-card"
+      >
         <div class="product-image">
           <img [src]="'assets/' + product.id + '.png'" />
         </div>
         <h3>{{ product.name }}</h3>
         <div class="product-controls">
-          <button (click)="addToCart(cartItems, product)">+</button>
+          <button (click)="modifyCart(cartItems, product, '+')">+</button>
           <span>
             {{ product.quantity }}
           </span>
           <ng-container>
             <button
               [disabled]="!isProductInCart(cartItems, product)"
-              (click)="addToCart(product, cartItems)"
+              (click)="modifyCart(cartItems, product, '-')"
             >
               -
             </button>
@@ -82,9 +85,11 @@ export class ProductListComponent implements OnInit {
   ];
 
   // The product with quantity, a local front-end in memory array
-  productsWithQuantity: any[] = [];
+  productsWithQuantity$: Observable<any> | undefined;
 
   cartItems$: Observable<any> | undefined;
+
+  selectedCategory$ = new BehaviorSubject<any>('');
 
   selectedCategory = '';
 
@@ -93,43 +98,39 @@ export class ProductListComponent implements OnInit {
   ngOnInit() {
     this.cartItems$ = this.datastore
       .documents<ExampleCollection>('example', (query) =>
-        query.where('id', 'in', [1, 2, 3, 4])
+        query
+          .where('id', 'in', [1, 2, 3, 4])
+          .where('category', '==', this.selectedCategory$)
       )
-      .valueChanges()
-      .pipe(
-        tap((cartItems) => {
-          this.products.forEach((product) => {
-            const selectedProduct = cartItems.find(
-              (item: any) => product.id === item.id
-            );
-            if (selectedProduct) {
-              this.productsWithQuantity.push(selectedProduct);
-            } else {
-              this.productsWithQuantity.push(product);
-            }
-          });
-        }),
-        take(1)
-      );
+      .valueChanges();
+
+    this.productsWithQuantity$ = this.cartItems$.pipe(
+      filter((x) => x.length),
+      map((cartItems) => {
+        const productsWithQuantity: any[] = [];
+        this.products.forEach((product) => {
+          const selectedProduct = cartItems.find(
+            (item: any) => product.id === item.id
+          );
+          if (selectedProduct) {
+            productsWithQuantity.push(selectedProduct);
+          }
+        });
+        return productsWithQuantity;
+      })
+    );
   }
 
-  async addToCart(cartItems: any, product: any) {
+  async modifyCart(cartItems: any, product: any, action: string) {
     const currentQuantity = this.getProductQuantity(cartItems, product);
     this.datastore
       .documents<ExampleCollection>('example', (query) =>
         query.where('id', '==', 1)
       )
-      .update(product.id, { ...product, quantity: currentQuantity + 1 });
-
-    console.log('{ ...product, quantity: currentQuantity + 1 }:', {
-      ...product,
-      quantity: currentQuantity + 1,
-    });
-    // const currentQuantity = this.getProductQuantity(cartItems, product);
-    // product.quantity = currentQuantity + 1;
-    // this.cartService.modifyItem(product).then((status) => {
-    //   console.log('adding  item status:', status);
-    // });
+      .update(product.id, {
+        ...product,
+        quantity: action === '+' ? currentQuantity + 1 : currentQuantity - 1,
+      });
   }
 
   isProductInCart(cartItems: any, product: any) {
@@ -141,24 +142,6 @@ export class ProductListComponent implements OnInit {
   }
 
   fetchProductsByCategory(category: string): void {
-    this.cartItems$ = this.datastore
-      .documents<ExampleCollection>('example', (query) =>
-        query.where('category', '==', category)
-      )
-      .valueChanges()
-      .pipe(
-        tap((cartItems) => {
-          this.productsWithQuantity = [];
-          this.products.forEach((product) => {
-            const selectedProduct = cartItems.find(
-              (item: any) => product.id === item.id
-            );
-            if (selectedProduct) {
-              this.productsWithQuantity.push(selectedProduct);
-            }
-          });
-        }),
-        take(1)
-      );
+    this.selectedCategory$.next(category);
   }
 }
